@@ -37,7 +37,7 @@ class CreatePermissionTables extends Migration{
         Schema::create($table_names['model_has_permissions'], function(Blueprint $table) use($table_names, $column_names){
             $table->unsignedInteger('permission_id')->comment('权限ID');
             $table->string('model_type');
-            $table->unsignedInteger($column_names['model_morph_key']);
+            $table->unsignedInteger($column_names['model_morph_key'])->comment("用户ID");
             $table->index([$column_names['model_morph_key'], 'model_type']);
 
             $table->foreign('permission_id')
@@ -55,7 +55,7 @@ class CreatePermissionTables extends Migration{
         Schema::create($table_names['model_has_roles'], function(Blueprint $table) use($table_names, $column_names){
             $table->unsignedInteger('role_id')->comment('角色ID');
             $table->string('model_type');
-            $table->unsignedInteger($column_names['model_morph_key']);
+            $table->unsignedInteger($column_names['model_morph_key'])->comment("用户ID");
             $table->index([$column_names['model_morph_key'], 'model_type']);
 
             $table->foreign('role_id')
