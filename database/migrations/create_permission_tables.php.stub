@@ -1,0 +1,104 @@
+<?php
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
+
+class CreatePermissionTables extends Migration{
+
+    public function up() {
+        $table_names = config('permission.tables_names');
+        $column_names = config('permission.column_names');
+
+        //权限表
+        Schema::create($table_names['permissions'], function(Blueprint $table){
+            $table->increments('id');
+            $table->string('name')->comment('权限名');
+            $table->string('display_name', 255)->comment('权限显示名');
+            $table->string('tag', '255')->comment('权限分组标签');
+            $table->string('guard_name');
+            $table->string('description')->comment('权限描述');
+            $table->timestamps();
+        });
+        DB::statement("ALTER TABLE `{$table_names['permissions']}` comment '权限表'");
+
+        //角色表
+        Schema::create($table_names['roles'], function(Blueprint $table){
+            $table->increments('id');
+            $table->string('name')->comment('角色名');
+            $table->string('display_name')->comment('角色显示名');
+            $table->string('description')->comment('角色描述');
+            $table->string('guard_name');
+            $table->timestamps();
+        });
+        DB::statement("ALTER TABLE `{$table_names['roles']}` comment '角色表' ");
+
+        //用户所拥有的权限表
+        Schema::create($table_names['model_has_permissions'], function(Blueprint $table) use($table_names, $column_names){
+            $table->unsignedInteger('permission_id')->comment('权限ID');
+            $table->string('model_type');
+            $table->unsignedInteger($column_names['model_morph_key']);
+            $table->index([$column_names['model_morph_key'], 'model_type']);
+
+            $table->foreign('permission_id')
+                ->references('id')
+                ->on($table_names['permissions'])
+                ->onDelete('cascade');
+
+            $table->primary(['permission_id', $column_names['model_morph_key'], 'model_type'],
+                'model_has_permissions_permission_model_type_primary');
+        });
+        DB::statement("ALTER TABLE `{$table_names['model_has_permissions']}` comment '用户拥有权限表'");
+
+
+        //用户所拥有的角色表
+        Schema::create($table_names['model_has_roles'], function(Blueprint $table) use($table_names, $column_names){
+            $table->unsignedInteger('role_id')->comment('角色ID');
+            $table->string('model_type');
+            $table->unsignedInteger($column_names['model_morph_key']);
+            $table->index([$column_names['model_morph_key'], 'model_type']);
+
+            $table->foreign('role_id')
+            ->references('id')
+            ->on($table_names['roles'])
+            ->onDelete('cascade');
+
+            $table->primary(['role_id', $column_names['model_morph_key'], 'model_type'], 'model_has_roles_role_model_type_primary');
+        });
+        DB::statement("ALTER TABLE `{$table_names['model_has_roles']}` comment '用户拥有的角色'");
+
+        //角色拥有的权限
+        Schema::create($table_names['role_has_permissions'], function(Blueprint $table) use($table_names){
+            $table->unsignedInteger('role_id')->comment('角色ID');
+            $table->unsignedInteger('permission_id')->comment('权限ID');
+
+            $table->foreign('permission_id')
+                ->on($table_names['permissions'])
+                ->references('id')
+                ->onDelete('cascade');
+
+            $table->foreign('role_id')
+                ->references('id')
+                ->on($table_names['roles'])
+                ->onDelete('cascade');
+
+            $table->primary(['role_id', 'permission_id']);
+        });
+
+        app('cache')
+            ->store(config('permission.cache.store') != 'default' ? config('permission.cache.store') : null)
+            ->forget(config('permission.cache.key'));
+    }
+
+    public function down(){
+        $table_names = config('permission.tables_names');
+
+        Schema::drop($table_names['roles']);
+        Schema::drop($table_names['permissions']);
+        Schema::drop($table_names['model_has_permissions']);
+        Schema::drop($table_names['model_has_roles']);
+        Schema::drop($table_names['role_has_permissions']);
+    }
+
+
+}
