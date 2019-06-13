@@ -2,6 +2,7 @@
 
 return [
     'models' => [
+
         'permission' => Zhulei\Permission\Models\Permission::class,
         'role' => Zhulei\Permission\Models\Role::class,
     ],

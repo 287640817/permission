@@ -1,21 +1,93 @@
 <?php
 namespace Zhulei\Permission;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\Compilers\BladeCompiler;
 use Illuminate\Routing\Route;
+use Illuminate\Filesystem\Filesystem;
+use Zhulei\Permission\Contracts\Role as RoleContract;
+use Zhulei\Permission\Contracts\Permission as PermissionContract;
 
 class PermissionServiceProvider extends ServiceProvider{
+
+
+    public function boot(Filesystem $filesystem, PermissionRegistrar $permissionLoader) {
+        if(isNotLumen()){
+            $this->publishes([
+                __DIR__.'/../config/permission.php' => config_path('permission.php')
+            ], 'config');
+            $this->publishes([
+                __DIR__.'/../database/migrations/create_permission_tables.php.stub' => $this->getMigrationFileName($filesystem),
+            ], 'migrations');
+
+            if(app()->version() >= '5.5') {
+                $this->registerMacroHelpers();
+            }
+        }
+
+        if($this->app->runningInConsole()){
+            $this->commands([
+                Commands\CacheReset::class,
+                Commands\CreateRole::class,
+                Commands\CreatePermission::class,
+                Commands\Show::class,
+            ]);
+        }
+        $this->registerModelBindings();
+        $permissionLoader->registerPermissions();
+
+        $this->app->singleton(PermissionRegistrar::class, function($app) use($permissionLoader){
+            return $permissionLoader;
+        });
+    }
+
+    protected function registerModelBindings(){
+        $config = $config = $this->app->config['permission.models'];
+        $this->app->bind(RoleContract::class, $config['permission']);
+
+        $this->app->bind(PermissionContract::class, $config['role']);
+    }
+
+
+
+    protected function getMigrationFileName(Filesystem $filesystem): string{
+        $timestamp = date('Y_m_d_His');
+        return Collection::make($this->app->databasePath().DIRECTORY_SEPARATOR.'migrations'.DIRECTORY_SEPARATOR)
+            ->flatMap(function($path) use($filesystem){
+                return $filesystem->glob($path.'*_create_permission_tables.php');
+            })
+            ->push($this->app->databasePath()."/migrations/{$timestamp}_create_permission_tables.php")
+            ->first();
+    }
+
+    protected function registerMacroHelpers(){
+        Route::macro('role', function($roles = []){
+            if (! is_array($roles)){
+                $roles = [$roles];
+            }
+            $roles = implode('|', $roles);
+            $this->middleware("role:$roles");
+            return $this;
+        });
+
+        Route::macro('permission', function($permissions = []){
+            if (! is_array($permissions)){
+                $permissions = [$permissions];
+            }
+            $permissions = implode('|', $permissions);
+            $this->middleware("permission:$permissions");
+            return $this;
+        });
+    }
+
+
     public function register()
     {
         if(isNotLumen()) {
             $this->mergeConfigFrom(__DIR__.'/../config/permission.php', 'permission');
         }
         $this->registerBladeExtensions();
-    }
-
-    public function boot() {
-
     }
 
     public function registerBladeExtensions(){
