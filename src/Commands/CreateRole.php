@@ -25,5 +25,22 @@ class CreateRole extends Command
     public function handle(){
         $roleClass = app(RoleContract::class);
         $role = $roleClass::findOrCreate($this->arguments('name'), $this->arguments('guard'));
+        $role->givePermissionTo($this->makePermissions($this->argument('permissions')));
+    }
+
+    protected function makePermissions(string $permissions = null){
+        if(empty($permissions)){
+            return;
+        }
+        $permissionClass = app(PermissionContract::class);
+        $permissions  = explode('|', $permissions);
+        $models = [];
+
+        foreach($permissions as $permission){
+            $models[] = $permissionClass::findOrCreate(trim($permission), $this->arguments('guard'));
+        }
+
+        return collect($models);
+
     }
 }

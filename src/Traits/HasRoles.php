@@ -1,10 +1,22 @@
 <?php
 namespace Zhulei\Permission\Traits;
 
-use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Support\Collection;
 use Zhulei\Permission\Contracts\Role;
+use Illuminate\Database\Eloquent\Builder;
+use Zhulei\Permission\PermissionRegistrar;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 trait HasRoles{
+
+    use HasPermissions;
+
+    private $roleClass;
+
+    public function hasAnyRole($roles): bool
+    {
+        return $this->hasRole($roles);
+    }
 
     public function hasRole($roles): bool
     {
@@ -63,4 +75,6 @@ trait HasRoles{
             'role_id'
         );
     }
+
+
 }
