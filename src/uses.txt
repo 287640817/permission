@@ -1,4 +1,4 @@
-artisan命令行命令：
+1:artisan命令行命令：
     1：清除权限缓存
         php artisan permission:cache-reset
     2：创建权限
@@ -11,6 +11,20 @@ artisan命令行命令：
         显示样式(default|borderless|compact|box)
         php artisan permission:show guard? style?
 
+
+2:Contracts契约接口
+    1:Permission权限接口
+        1：roles 权限所属角色 BelongsToMany
+        2：findByName  通过权限名,guard_name查找权限(name, guardName)
+        3：findById  通过权限Id,guard_name查找权限 (id, guardName)
+        4：findOrCreate 通过权限名查找或新建权限  (name, guardName)
+
+    2:Role角色接口
+        1:permissions 角色所拥有的权限 BelongsToMany
+        2：findByName  通过角色名,guard_name查找权限(name, guardName)
+        3：findById  通过角色Id,guard_name查找权限 (id, guardName)
+        4：findOrCreate 通过角色名查找或新建角色  (name, guardName)
+        5：hasPermissionTo 判断给定的角色是否有权限执行 (string/\Zhulei\Permission\Contracts\Permission permission)
 
 
 

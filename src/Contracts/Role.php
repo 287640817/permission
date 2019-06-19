@@ -36,7 +36,7 @@ interface Role{
 
     /***
      * 判断给定的权限是否有权限执行
-     * @param string|\Spatie\Permission\Contracts\Permission $permission
+     * @param string|\Zhulei\Permission\Contracts\Permission $permission
      * @return bool
      */
     public function hasPermissionTo($permission): bool;
