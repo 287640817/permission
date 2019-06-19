@@ -1,0 +1,17 @@
+artisan命令行命令：
+    1：清除权限缓存
+        php artisan permission:cache-reset
+    2：创建权限
+        php artisan permission:create-permission name guard?
+    3：创建角色
+        php artisan permission:create-role name guard? permissions|permissions?
+    4:命令行显示守卫下面管理员有哪些权限
+        ['', '管理员', '报表管理员'];
+        ['add', '✔', '.'];
+        显示样式(default|borderless|compact|box)
+        php artisan permission:show guard? style?
+
+
+
+
+

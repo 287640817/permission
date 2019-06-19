@@ -22,7 +22,7 @@ class CreatePermission extends Command
 
     public function handle(){
         $permissionClass = app(PermissionContract::class);
-        $permission = $permissionClass::findOrCreate($this->arguments('name'), $this->arguments('guard'));
+        $permission = $permissionClass::findOrCreate($this->argument('name'), $this->argument('guard'));
         $this->info("权限{$permission->name}创建成功！");
     }
 

@@ -14,9 +14,10 @@ class CreatePermissionTables extends Migration{
         Schema::create($table_names['permissions'], function(Blueprint $table){
             $table->increments('id');
             $table->string('name')->comment('权限名');
+            $table->string('guard_name')-comment('路由守卫名');
+
             $table->string('display_name', 255)->comment('权限显示名');
             $table->string('tag', '255')->comment('权限分组标签');
-            $table->string('guard_name');
             $table->string('description')->comment('权限描述');
             $table->timestamps();
         });
@@ -26,9 +27,9 @@ class CreatePermissionTables extends Migration{
         Schema::create($table_names['roles'], function(Blueprint $table){
             $table->increments('id');
             $table->string('name')->comment('角色名');
+            $table->string('guard_name')->comment("路由守卫名");
             $table->string('display_name')->comment('角色显示名');
             $table->string('description')->comment('角色描述');
-            $table->string('guard_name');
             $table->timestamps();
         });
         DB::statement("ALTER TABLE `{$table_names['roles']}` comment '角色表' ");
@@ -48,7 +49,7 @@ class CreatePermissionTables extends Migration{
             $table->primary(['permission_id', $column_names['model_morph_key'], 'model_type'],
                 'model_has_permissions_permission_model_type_primary');
         });
-        DB::statement("ALTER TABLE `{$table_names['model_has_permissions']}` comment '用户拥有权限表'");
+        DB::statement("ALTER TABLE `{$table_names['model_has_permissions']}` comment '用户和权限对应表'");
 
 
         //用户所拥有的角色表
@@ -65,7 +66,7 @@ class CreatePermissionTables extends Migration{
 
             $table->primary(['role_id', $column_names['model_morph_key'], 'model_type'], 'model_has_roles_role_model_type_primary');
         });
-        DB::statement("ALTER TABLE `{$table_names['model_has_roles']}` comment '用户拥有的角色'");
+        DB::statement("ALTER TABLE `{$table_names['model_has_roles']}` comment '用户和角色对应表'");
 
         //角色拥有的权限
         Schema::create($table_names['role_has_permissions'], function(Blueprint $table) use($table_names){
@@ -84,6 +85,7 @@ class CreatePermissionTables extends Migration{
 
             $table->primary(['role_id', 'permission_id']);
         });
+        DB::statement("ALTER TABLE `{$table_names['role_has_permissions']}` comment '角色和权限对应表'");
 
         app('cache')
             ->store(config('permission.cache.store') != 'default' ? config('permission.cache.store') : null)
