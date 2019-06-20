@@ -8,6 +8,7 @@
 
 namespace Zhulei\Permission\Exceptions;
 use InvalidArgumentException;
+
 class RoleAlreadyExists extends InvalidArgumentException
 {
     public static function create(string $roleName, string $guardName)

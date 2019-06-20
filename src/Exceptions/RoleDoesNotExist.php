@@ -17,6 +17,6 @@ class RoleDoesNotExist extends InvalidArgumentException
     }
 
     public static function withId(string $roleId){
-        return new static('没有ID为{$roleId}的角色。');
+        return new static("没有ID为{$roleId}的角色。");
     }
 }

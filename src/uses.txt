@@ -26,6 +26,35 @@
         4：findOrCreate 通过角色名查找或新建角色  (name, guardName)
         5：hasPermissionTo 判断给定的角色是否有权限执行 (string/\Zhulei\Permission\Contracts\Permission permission)
 
+3:异常类 src/Exceptions/
+    1：守卫不匹配 GuardDoesNotMath
+        create方法  用守卫名添加角色或者权限在系统守卫集合中不存在
+    2：权限已经存在 PermissionAlreadyExists
+        create方法  添加的权限名在某个守卫下已经存在了
+    3：权限不存在 PermissionDoesNotExist
+        create方法 添加的权限名在守卫下不存在
+        withId  这个ID在权限中不存在
+    4：角色已经存在  RoleAlreadyExists
+        create  角色名在守卫下已经存在
+    5：角色不存在  RoleDoesNotExist
+        named 没有这个角色名
+        withId 角色ID不存在
+    6:未认证 UnauthorizedException
+        forRoles  提示用户角色不对 参数为正确的角色数组
+        forPermissions  提示用户权限不对  参数是正确的权限数组
+        forRolesOrPermissions 提示用户没有角色或者权限的权限  参数为正确的角色或权限数组
+        notLoggedIn  提示用户未登陆
+        getRequiredRoles 返回正确的角色数组
+        getRequiredPermissions 返回正确的权限数组
+
+
+
+
+
+
+
+
+
 
 
 

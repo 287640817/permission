@@ -13,6 +13,7 @@ class UnauthorizedException extends HttpException
 {
     private $requiredRoles = [];
     private $requiredPermissions = [];
+
     public static function forRoles(array $roles): self
     {
         $message = '用户角色不对.';
@@ -24,6 +25,7 @@ class UnauthorizedException extends HttpException
         $exception->requiredRoles = $roles;
         return $exception;
     }
+
     public static function forPermissions(array $permissions): self
     {
         $message = '用户没有权限.';
@@ -35,6 +37,7 @@ class UnauthorizedException extends HttpException
         $exception->requiredPermissions = $permissions;
         return $exception;
     }
+
     public static function forRolesOrPermissions(array $rolesOrPermissions): self
     {
         $message = '用户没有权限.';
@@ -46,14 +49,17 @@ class UnauthorizedException extends HttpException
         $exception->requiredPermissions = $rolesOrPermissions;
         return $exception;
     }
+
     public static function notLoggedIn(string $message = '用户未登陆.'): self
     {
         return new static(403, $message, null, []);
     }
+
     public function getRequiredRoles(): array
     {
         return $this->requiredRoles;
     }
+
     public function getRequiredPermissions(): array
     {
         return $this->requiredPermissions;
