@@ -24,7 +24,6 @@ class PermissionMiddleware
                 return $next($request);
             }
         }
-
         throw UnauthorizedException::forPermissions($permission);
     }
 }

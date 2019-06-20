@@ -16,7 +16,7 @@ class RoleMiddleware
 {
     public function handle($request, Closure $next, $role){
         if(Auth::guest()){
-            throw UnauthorizedException::forRoles($role);
+            throw  UnauthorizedException::notLoggedIn();
         }
         $roles = is_array($role) ? $role : explode('|', $role);
 
