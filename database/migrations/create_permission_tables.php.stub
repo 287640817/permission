@@ -55,8 +55,8 @@ class CreatePermissionTables extends Migration{
         //用户所拥有的角色表
         Schema::create($table_names['model_has_roles'], function(Blueprint $table) use($table_names, $column_names){
             $table->unsignedInteger('role_id')->comment('角色ID');
-            $table->string('model_type');
             $table->unsignedInteger($column_names['model_morph_key'])->comment("用户ID");
+            $table->string('model_type');
             $table->index([$column_names['model_morph_key'], 'model_type']);
 
             $table->foreign('role_id')

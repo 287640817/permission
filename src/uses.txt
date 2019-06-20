@@ -106,6 +106,48 @@
     });
 
 
+5：模型类
+    1：权限模型 Permission
+        1：roles 权限属于哪些角色 BelongsToMany
+            有一个roles和permission，和role_has_permissions表，是多对多的关系，在permission模型中有roles方法，哪些角色拥有此权限。
+            return $this->belongsToMany(
+                'Zhulei\Permission\Models\Role::class/Zhulei\Permission\Models\Role',//当前模型想获取的模型字符串或字符串类名
+                'role_has_permissions'//关联连接表名，如果不设置默认是用按两个表字符顺序连接的两个表permission_users
+                'permission_id',//当前模型在连接表中的外键
+                'role_id'//另一个模型（第一个参数）在连接表里的外键
+            );
+            多对多关系：
+                一个角色拥有多个权限，一个权限属于多个角色，是多对多关系，两个模型中都使用belongsToMany()方法来定义。
+                有三个表。roles,permissions,role_has_permissions(此表中有permission_id,role_id)
+                关联和被关联表都使用
+                return $this->belongsToMany('想获取的模型'，'关联表', '当前模型在关联表中的外键','另一个表在关联表中的外键');
+                定义好之后就可以使用$user->roles动态属性获取到所有的角色数组。
+                定义好之后也可以使用链式的进行过滤查询$user->roles()->orderBy('id')->get();
+                获取关联连接表字段：
+                    pivot代表中间表模型，可以像Eloquent模型一样使用
+                    foreach($user->roles as $role){
+                        $role->pivot->create_at;
+                    }
+                    模型情况下中间表只有两个字段，如果有其他字段，需要在定义关联声明时明确指出，
+                    return $this->belongsToMany('App\Role')->withPivot('column1', 'column2');
+                    如果想让中间表自动维护created_at,updated_at:
+                    return $this->belongsToMany('App\Role')->withTimestamps();
+        2:__construct
+            权限模型初始化，可以传入属性数组，
+            如果传入就用传入的守卫名，如果没传入用配置文件里的守卫名，给当前模型设置守卫名，然后设置当前模型表名。
+
+            protected $guarded 不允许自动填充的字段
+            protected $fillable 允许自动填充（白名单）
+
+            Post::create($request->all())//自动批量赋值并过滤
+            我们也可以使用如下形式：
+                $post = new Post($data);
+                $post->user_id = Auth::id();
+                $post->save();
+                或者使用fill()方法，它也会使用过滤。
+
+
+
 
 
 
