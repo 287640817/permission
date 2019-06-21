@@ -29,6 +29,7 @@ class Permission extends Model implements PermissionContracts
 
     protected $guarded = ['id'];
 
+
     public function __construct(array $attributes = [])
     {
         $attributes['guard_name'] = $attributes['guard_name'] ??  config('auth.defaults.guard');

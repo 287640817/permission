@@ -107,6 +107,7 @@
 
 
 5：模型类
+
     1：权限模型 Permission
         1：roles 权限属于哪些角色 BelongsToMany
             有一个roles和permission，和role_has_permissions表，是多对多的关系，在permission模型中有roles方法，哪些角色拥有此权限。
@@ -145,6 +146,133 @@
                 $post->user_id = Auth::id();
                 $post->save();
                 或者使用fill()方法，它也会使用过滤。
+
+            self::出现在哪就解析成相应的类。
+            $this指向当前实例化的对象。
+            self::和parent::出现在哪个类中就解析为相应的类，除非子类覆盖父类中的方法。
+            静态属性不能通过已实例化的对象来访问，但静态方法可以。
+            由于静态方法不需要通过对象就可以访问，所以伪变量$this在静态方法中不可用。
+            静态方法不能通过->访问,只能通过::访问。
+            可以通过变量引用类静态方法：
+                $classname = 'Foo';
+                $classname::aStaticMethod();
+
+            self::, __CLASS__对当前类的静态引用，取决于该方法定义在哪个类中。
+            static::表示最终哪个类调用的就是哪个类。
+            在非静态环境下，也就是有个A类有个私有方法被类中公有方法调用，然后该类被实例化，当中的公有方法中的static::foo()foo是私有方法，在非静态环境下，所调用的类即为该对象实例所属的类。由于 $this-> 会在同一作用范围内尝试调用私有方法，而 static:: 则可能给出不同结果。另一个区别是 static:: 只能用于静态属性。
+            后期静态绑定的解析会一直到取得一个完全解析了的静态调用为止。另一方面，如果静态调用使用 parent:: 或者 self:: 将转发调用信息。
+
+        3：create 静态方法
+            创建权限     array $attributes      (name, guard_name等)
+            PermissionContract::create();
+
+        4：users    MorphToMany
+            取出这个权限的所有用户，多对多多态关联
+            permissions,roles,manage(取得表),model_has_permission(关联表)
+
+            PermissionContract::users();
+
+        5：findByName  (string $name, $guardName)  static   PermissionContract
+            用权限名查找权限
+            PermissionContract::findByName()
+        6: findById (int $id, $guardName = null) static
+            用ID查找权限
+            PermissionContract::findById()
+        7: 查找没有的话添加 findOrCreate(string $name, $guardName = null): PermissionContract
+
+        8：traits
+            1:RefreshesPermissionCache
+                bootRefreshesPermissionCache 用不到，是兼容5.5的
+            2：HasRoles
+
+   方法使用：
+        1：通过用户添加权限：
+        $user->givePermissionTo('edit articles');
+            参数为：
+            权限 string|
+            权限 array|
+            权限 \Spatie\Permission\Contracts\Permission|
+            权限 \Illuminate\Support\Collection
+                多对多关联操作：
+                    通过用户移除中间表所有的角色$user->roles()->detach(); $user->roles()->detach($roleId);
+                    通过用户附加中间表角色  $user->roles()->attach($roleId);  $user->roles()->detach([1, 2, 3]);
+                    通过用户同步中间表角色没有的添加，有的删除：$user->roles()->sync([1, 2, 3]);
+         2:常用操作：
+            通过用户添加角色：
+                $user->assignRole('writer');  参数可以是字符串，角色数组，角色集合\Spatie\Permission\Contracts\Role
+            通过角色添加权限：
+                $role->givePermissionTo('edit articles'); 参数可以为 字符串，数组，权限接口，集合
+            通过角色添加权限：
+            $role->givePermissionTo($permission);或者$role->syncPermissions($permissions);
+            通过权限把权限赋值给角色：
+            $permission->assignRole($role); 或者 $permission->syncRoles($roles);
+
+            通过角色删除权限：
+            $role->revokePermissionTo($permission);参数为 \Spatie\Permission\Contracts\Permission，\Spatie\Permission\Contracts\Permission[]， string, []
+            通过权限删除某个角色里的权限：
+            $permission->removeRole($role);
+
+            通过用户获取用户下面所有的权限名字集合：
+                $permissionNames = $user->getPermissionNames();
+            通过用户获取用户下面所有的权限集合：
+                $permissions = $user->permissions;
+            获取该模型的权限集合：
+                $permissions = $user->getDirectPermissions();
+            返回权限通过该用户的角色：
+                $permissions = $user->getPermissionsViaRoles();
+            通过用户获取用户角色名称集合：
+                $roles = $user->getRoleNames();
+            返回具有该角色的用户集合：
+                $users = User::role('writer')->get();
+
+
+
+
+        4：添加hasRole到用户模型：
+            use Illuminate\Foundation\Auth\User as Authenticatable;
+            use Zhulei\Permission\Traits\HasRoles;
+
+            class User extends Authenticatable
+            {
+                use HasRoles;
+
+                // ...
+            }
+        5:可以使用自带的模型创建角色和权限：
+            use Zhulei\Permission\Models\Role;
+            use Zhulei\Permission\Models\Permission;
+
+            $role = Role::create(['name' => 'writer']);
+            $permission = Permission::create(['name' => 'edit articles']);
+
+
+
+
+        6：可以使用laravel自带的Gate 拦截检查
+            $user->can('edit articles');
+
+        7：使用准备
+            添加服务提供者：
+            config/app.php
+
+            'providers' => [
+                // ...
+                Spatie\Permission\PermissionServiceProvider::class,
+            ];
+
+            生成数据表和配置文件：
+                php artisan vendor:publish --provider="Zhulei\Permission\PermissionServiceProvider" --tag="migrations"
+                php artisan migrate
+                php artisan vendor:publish --provider="Zhulei\Permission\PermissionServiceProvider" --tag="config"
+            添加中间件：
+                protected $routeMiddleware = [
+                    // ...
+                    'role' => \Zhulei\Permission\Middlewares\RoleMiddleware::class,
+                    'permission' => \Zhulei\Permission\Middlewares\PermissionMiddleware::class,
+                    'role_or_permission' => \Zhulei\Permission\Middlewares\RoleOrPermissionMiddleware::class,
+                ];
+
+
 
 
 
