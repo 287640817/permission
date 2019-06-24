@@ -224,8 +224,76 @@
                 $roles = $user->getRoleNames();
             返回具有该角色的用户集合：
                 $users = User::role('writer')->get();
+            通过用户返回具有某个权限的所有用户集合：
+                $users = User::permission('edit')->get();
+            通过用户赋予用户某些权限：
+            $user->givePermissionTo('edit articles', 'delete articles');
+            // You may also pass an array
+            $user->givePermissionTo(['edit articles', 'delete articles']);
+            $user->givePermissionTo('edit');//参数可以为字符串，数组，\Zhulei\Permission\Contracts\Permission接口，\Illuminate\Support\Collection集合
 
+            通过用户删除用户下角色：
+                $user->revokePermissionTo('edit articles');参数可以为字符串，数组，\Spatie\Permission\Contracts\Permission权限，\Spatie\Permission\Contracts\Permission[]集合
+            通过用户删除不存在的添加新的，常用户编辑用户权限的时候：
+            $user->syncPermissions(['edit articles', 'delete articles']);//参数可以是string|array|\Spatie\Permission\Contracts\Permission|\Illuminate\Support\Collection
 
+            通过用户确认用户是否有某个权限：
+                $user->hasPermissionTo('1');
+                $user->hasPermissionTo(Permission::find(1)->id);
+                $user->hasPermissionTo($somePermission->id);
+                $user->hasPermissionTo('edit'); //参数可以是string|int|\Spatie\Permission\Contracts\Permission
+            通过用户确认用户是否有当中的某个权限：
+                $user->hasAnyPermission(['edit articles', 1, 5]);参数也可以是数字和字符
+                $user->hasAnyPermission(['edit articles', 'publish articles', 'unpublish articles']);//参数是字符串数组，或者ID数组
+            通过用户判断是否有这这里面的所有权限：
+                $user->hasAllPermissions(['edit articles', 'publish articles', 'unpublish articles']);//参数是字符串数组，或者ID数组
+
+            使用laravel默认自带的can函数的权限，因为权限已经保存在Illuminate\Auth\Access\Gate中了：
+                $user->can('edit articles');
+
+            通过用户把某些角色赋值给用户：
+                常用于添加时：
+               array|string|\Spatie\Permission\Contracts\Role ...$roles
+               $user->assignRole('writer');
+               $user->assignRole('writer', 'admin');
+               // or as an array
+               $user->assignRole(['writer', 'admin'])
+            通过用户移除用户的某些角色：
+                $user->removeRole('writer');
+            通过用户移除用户所有角色然后添加角色，常用于编辑：
+                $user->syncRoles(['writer', 'admin']);
+
+            通过用户判断用户是否具有某个角色：
+                $user->hasRole('writer');
+            通过用户判断用户是否具有列表当中某个角色的权限：
+                $user->hasAnyRole(Role::all());
+            通过用户判断用户是否具有全部角色权限：
+                $user->hasAllRoles(Role::all());
+            通过角色把权限赋值给角色：
+                $role->givePermissionTo('edit articles');
+            通过角色判断角色时候有这个权限的权限：
+                $role->hasPermissionTo('edit articles');
+            通过角色移除角色的权限：
+                \Spatie\Permission\Contracts\Permission
+                \Spatie\Permission\Contracts\Permission[]
+                string
+                string[]
+
+                $role->revokePermissionTo('edit articles');
+
+            用户名字查找某个角色给角色赋予权限：
+                $role = Role::findByName('writer');
+                $role->givePermissionTo('edit articles');
+            通过用户赋予用户角色和赋予用户权限：
+                $user->assignRole('writer');
+                $user->givePermissionTo('delete articles');
+            通过用户直接获取用户所有权限：
+                $user->getDirectPermissions() // Or $user->permissions;
+            通过用户然后通过角色获取用户所有权限：
+                $user->getPermissionsViaRoles();
+
+            通过用户获取用户所有权限：
+                $user->getAllPermissions();
 
 
         4：添加hasRole到用户模型：
@@ -244,7 +312,6 @@
 
             $role = Role::create(['name' => 'writer']);
             $permission = Permission::create(['name' => 'edit articles']);
-
 
 
 
@@ -273,7 +340,133 @@
                 ];
 
 
+        8：模板使用：
+            角色操作：
+                @role('writer')
+                    I am a writer!
+                @else
+                    I am not a writer...
+                @endrole
 
+                @hasrole('writer')
+                    I am a writer!
+                @else
+                    I am not a writer...
+                @endhasrole
+
+
+                @hasanyrole($collectionOfRoles)
+                    I have one or more of these roles!
+                @else
+                    I have none of these roles...
+                @endhasanyrole
+                // or
+                @hasanyrole('writer|admin')
+                    I am either a writer or an admin or both!
+                @else
+                    I have none of these roles...
+                @endhasanyrole
+
+
+                @hasallroles($collectionOfRoles)
+                    I have all of these roles!
+                @else
+                    I do not have all of these roles...
+                @endhasallroles
+                // or
+                @hasallroles('writer|admin')
+                    I am both a writer and an admin!
+                @else
+                    I do not have all of these roles...
+                @endhasallroles
+
+
+                @unlessrole('does not have this role')
+                    I do not have the role
+                @else
+                    I do have the role
+                @endunlessrole
+
+
+
+            权限操作：
+                @can('edit articles')
+                  //
+                @endcan
+
+                @if(auth()->user()->can('edit articles') && $some_other_condition)
+                  //
+                @endif
+
+
+
+        9：超级管理员
+            在AuthServiceProvider  boot方法中添加如下东西来检测是否管理员：
+            use Illuminate\Support\Facades\Gate;
+
+            class AuthServiceProvider extends ServiceProvider
+            {
+                public function boot()
+                {
+                    $this->registerPolicies();
+
+                    // Implicitly grant "Super Admin" role all permissions
+                    // This works in the app by using gate-related functions like auth()->user->can() and @can()
+                    Gate::before(function ($user, $ability) {
+                        return $user->hasRole('Super Admin') ? true : null;
+                    });
+                }
+            }
+
+
+            如果你希望管理员不能操作一些东西可以如下这样：
+                Gate::after(function ($user, $ability) {
+                   return $user->hasRole('Super Admin'); // note this returns boolean
+                });
+
+        如果需要覆盖默认的403错误可以使用：
+            public function render($request, Exception $exception)
+            {
+                if ($exception instanceof \Zhulei\Permission\Exceptions\UnauthorizedException) {
+                    // Code here ...
+                }
+
+                return parent::render($request, $exception);
+            }
+
+
+        数据填充：
+            use Illuminate\Database\Seeder;
+            use Spatie\Permission\Models\Role;
+            use Spatie\Permission\Models\Permission;
+
+            class RolesAndPermissionsSeeder extends Seeder
+            {
+                public function run()
+                {
+                    // Reset cached roles and permissions
+                    app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+                    // create permissions
+                    Permission::create(['name' => 'edit articles']);
+                    Permission::create(['name' => 'delete articles']);
+                    Permission::create(['name' => 'publish articles']);
+                    Permission::create(['name' => 'unpublish articles']);
+
+                    // create roles and assign created permissions
+
+                    // this can be done as separate statements
+                    $role = Role::create(['name' => 'writer']);
+                    $role->givePermissionTo('edit articles');
+
+                    // or may be done by chaining
+                    $role = Role::create(['name' => 'moderator'])
+                        ->givePermissionTo(['publish articles', 'unpublish articles']);
+
+                    $role = Role::create(['name' => 'super-admin']);
+                    $role->givePermissionTo(Permission::all());
+                }
+            }
 
 
 
